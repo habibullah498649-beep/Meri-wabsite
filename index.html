@@ -1,50 +1,71 @@
 <!DOCTYPE html>
-<html lang="ur">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Car Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level 1 - Gaon Race</title>
 <style>
-body{margin:0;background:#222;color:white;text-align:center;font-family:sans-serif;overflow:hidden}
-#road{width:300px;height:500px;background:#333;margin:10px auto;position:relative;overflow:hidden;border-left:5px solid white;border-right:5px solid white}
-#mycar{width:50px;height:80px;background:red;position:absolute;bottom:20px;left:125px;border-radius:10px;font-size:35px;line-height:80px}
-.enemy{width:50px;height:80px;background:yellow;position:absolute;top:-100px;border-radius:10px;font-size:35px;line-height:80px;color:black}
-button{padding:15px 30px;font-size:20px;margin:5px;border-radius:10px;border:none;background:green;color:white}
-#score{font-size:22px}
+body{margin:0;background:#7ec850;text-align:center;font-family:sans-serif}
+canvas{background:#8fd16a;border:3px solid #333;margin-top:10px}
+button{padding:15px 25px;font-size:20px;margin:5px;border-radius:10px}
 </style>
 </head>
 <body>
-<h2>🚗 کار والی گیم</h2>
-<div id="score">سکور: 0 | لیول: 1</div>
-<div id="road">
-<div id="mycar">🚗</div>
-</div>
-<button onclick="move(-1)">◀ کھبے</button>
-<button onclick="move(1)">سجے ▶</button>
-<br><button onclick="location.reload()" style="background:orange">دوبارہ کھیڈو</button>
+<h2>LEVEL 1 - GAON RACE</h2>
+<canvas id="game" width="360" height="500"></canvas><br>
+<button onclick="move('up')">⬆️ آگے</button><br>
+<button onclick="move('left')">⬅️</button>
+<button onclick="move('right')">➡️</button>
+<button onclick="startSound()">🔊 آواز آن کرو</button>
+<p id="msg">فنش لائن تک پہنچو!</p>
+
 <script>
-let x=125,score=0,speed=3,level=1;
-let road=document.getElementById('road');
-let mycar=document.getElementById('mycar');
-function move(d){x+=d*30;if(x<0)x=0;if(x>250)x=250;mycar.style.left=x+'px';}
-function makeEnemy(){
-let e=document.createElement('div');
-e.className='enemy';e.innerHTML='🚙';
-e.style.left=Math.floor(Math.random()*5)*55+'px';
-e.style.top='-100px';
-road.appendChild(e);
-let y=-100;
-let t=setInterval(()=>{
-y+=speed;e.style.top=y+'px';
-if(y>500){clearInterval(t);e.remove();score+=10;
-if(score%100==0){level++;speed++;}
-document.getElementById('score').innerText='سکور: '+score+' | لیول: '+level;}
-let mx=x,my=400;
-if(y+80>my && y<my+80 && Math.abs(parseInt(e.style.left)-mx)<45){
-alert('گیم ختم! تیرا سکور: '+score);clearInterval(t);location.reload();}
-},20);
+let c=document.getElementById("game");
+let x=c.getContext("2d");
+let carX=160, carY=420;
+let audioCtx=null, osc=null;
+
+function startSound(){
+  if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+  if(!osc){
+    osc=audioCtx.createOscillator();
+    let g=audioCtx.createGain();
+    osc.type='sawtooth'; osc.frequency.value=80; g.gain.value=0.05;
+    osc.connect(g); g.connect(audioCtx.destination); osc.start();
+  }
+  document.getElementById("msg").innerText="آواز آن ہو گئی! اب کار چلاؤ";
 }
-setInterval(makeEnemy,1200);
+
+function draw(){
+  x.clearRect(0,0,360,500);
+  // Road
+  x.fillStyle="#8a5a2b"; x.fillRect(120,0,120,500);
+  x.fillStyle="#fff"; x.fillRect(175,0,10,500);
+  // Grass / Fields
+  x.fillStyle="#4caf50"; x.fillRect(0,0,120,500); x.fillRect(240,0,120,500);
+  // Finish Line
+  x.fillStyle="#fff"; x.fillRect(120,20,120,20);
+  x.fillStyle="#000";
+  for(let i=0;i<6;i++){ x.fillRect(120+i*20,20,10,10); x.fillRect(130+i*20,30,10,10); }
+  x.fillStyle="#000"; x.font="bold 16px sans-serif"; x.fillText("FINISH",150,15);
+  // Car
+  x.fillStyle="red"; x.fillRect(carX,carY,40,60);
+  x.fillStyle="#333"; x.fillRect(carX-5,carY+5,10,15); x.fillRect(carX+35,carY+5,10,15);
+  x.fillRect(carX-5,carY+40,10,15); x.fillRect(carX+35,carY+40,10,15);
+  x.fillStyle="white"; x.font="bold 18px sans-serif"; x.fillText("1",carX+15,carY+35);
+}
+
+function move(d){
+  if(osc) osc.frequency.value=120+Math.random()*80;
+  if(d=='up') carY-=20;
+  if(d=='left') carX-=20;
+  if(d=='right') carX+=20;
+  if(carY<=40){
+    document.getElementById("msg").innerText="جیت گئے! 🎉 Level 1 Complete!";
+    if(osc) osc.frequency.value=300;
+  }
+  draw();
+}
+draw();
 </script>
 </body>
 </html>
