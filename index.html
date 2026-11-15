@@ -1,71 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="ur">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Level 1 - Gaon Race</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mini Booyah - Free Fire Jaisi Game</title>
 <style>
-body{margin:0;background:#7ec850;text-align:center;font-family:sans-serif}
-canvas{background:#8fd16a;border:3px solid #333;margin-top:10px}
-button{padding:15px 25px;font-size:20px;margin:5px;border-radius:10px}
+*{margin:0;padding:0;box-sizing:border-box;touch-action:none;user-select:none}
+body{background:#111;overflow:hidden;font-family:Arial,sans-serif;color:white}
+#game{width:100vw;height:100vh;position:relative;background:#2d6a2e;overflow:hidden}
+#player{width:40px;height:40px;background:#ffcc00;border-radius:50%;position:absolute;border:3px solid #000;display:flex;align-items:center;justify-content:center;font-size:22px;z-index:10}
+.enemy{width:36px;height:36px;background:#e74c3c;border-radius:50%;position:absolute;border:3px solid #000;display:flex;align-items:center;justify-content:center;font-size:20px}
+.bullet{width:8px;height:8px;background:yellow;border-radius:50%;position:absolute;z-index:5}
+#top{position:absolute;top:0;left:0;right:0;padding:10px;display:flex;justify-content:space-between;z-index:20;font-weight:bold;text-shadow:1px 1px 2px #000}
+#healthBar{width:120px;height:14px;background:#333;border:2px solid #fff;border-radius:10px;overflow:hidden}
+#healthFill{width:100%;height:100%;background:#2ecc71}
+#controls{position:absolute;bottom:15px;left:0;right:0;display:flex;justify-content:space-between;padding:0 15px;z-index:20}
+#joy{width:110px;height:110px;background:rgba(255,255,255,.25);border-radius:50%;position:relative;border:2px solid #fff}
+#knob{width:45px;height:45px;background:#fff;border-radius:50%;position:absolute;top:32px;left:32px}
+.btn{width:70px;height:70px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold}
+#fireBtn{background:#e74c3c}
+#jumpBtn{background:#3498db;width:60px;height:60px;font-size:22px}
+#startScreen{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;text-align:center;padding:20px}
+#startBtn{background:#ffcc00;color:#000;padding:15px 40px;font-size:22px;font-weight:bold;border:none;border-radius:15px}
+#winScreen{position:absolute;inset:0;background:rgba(255,204,0,.95);color:#000;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
 </style>
 </head>
 <body>
-<h2>LEVEL 1 - GAON RACE</h2>
-<canvas id="game" width="360" height="500"></canvas><br>
-<button onclick="move('up')">⬆️ آگے</button><br>
-<button onclick="move('left')">⬅️</button>
-<button onclick="move('right')">➡️</button>
-<button onclick="startSound()">🔊 آواز آن کرو</button>
-<p id="msg">فنش لائن تک پہنچو!</p>
-
+<div id="game">
+  <div id="top">
+    <div>❤️ <div id="healthBar"><div id="healthFill"></div></div></div>
+    <div>🏆 Kills: <span id="kills">0</span></div>
+    <div>👹 Baqi: <span id="left">8</span></div>
+  </div>
+  <div id="player">😎</div>
+  <div id="controls">
+    <div id="joy"><div id="knob"></div></div>
+    <div style="display:flex;gap:10px;align-items:end">
+      <div class="btn" id="jumpBtn">🏃</div>
+      <div class="btn" id="fireBtn">🔫</div>
+    </div>
+  </div>
+  <div id="startScreen">
+    <h1 style="font-size:42px;color:#ffcc00">🔥 MINI BOOYAH 🔥</h1>
+    <p>Free Fire Jaisi Game</p>
+    <p>8 Dushman Hain. Sab Ko Maaro Aur BOOYAH Karo!</p>
+    <p>🕹️ Left se Chalo<br>🔫 Right se Goli Maaro</p>
+    <button id="startBtn">▶️ GAME START</button>
+  </div>
+  <div id="winScreen">
+    <h1 style="font-size:50px">🏆 BOOYAH! 🏆</h1>
+    <h2>Tu Jeet Gaya Yar!</h2>
+    <p>Tu hi No.1 Hai!</p>
+    <button onclick="location.reload()" style="padding:12px 30px;font-size:20px;border-radius:12px;border:3px solid #000;background:#fff;font-weight:bold">🔄 Dobara Khelo</button>
+  </div>
+</div>
 <script>
-let c=document.getElementById("game");
-let x=c.getContext("2d");
-let carX=160, carY=420;
-let audioCtx=null, osc=null;
-
-function startSound(){
-  if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
-  if(!osc){
-    osc=audioCtx.createOscillator();
-    let g=audioCtx.createGain();
-    osc.type='sawtooth'; osc.frequency.value=80; g.gain.value=0.05;
-    osc.connect(g); g.connect(audioCtx.destination); osc.start();
+let px=200, py=300, health=100, kills=0, enemies=[], bullets=[], playing=false, dx=0, dy=0;
+const player=document.getElementById('player');
+const game=document.getElementById('game');
+function spawnEnemies(){
+  for(let i=0;i<8;i++){
+    let e=document.createElement('div'); e.className='enemy'; e.textContent='👹';
+    let ex=Math.random()*300+20, ey=Math.random()*400+20;
+    e.style.left=ex+'px'; e.style.top=ey+'px'; game.appendChild(e);
+    enemies.push({el:e,x:ex,y:ey,hp:3,speed:0.4+Math.random()*0.5});
   }
-  document.getElementById("msg").innerText="آواز آن ہو گئی! اب کار چلاؤ";
 }
-
-function draw(){
-  x.clearRect(0,0,360,500);
-  // Road
-  x.fillStyle="#8a5a2b"; x.fillRect(120,0,120,500);
-  x.fillStyle="#fff"; x.fillRect(175,0,10,500);
-  // Grass / Fields
-  x.fillStyle="#4caf50"; x.fillRect(0,0,120,500); x.fillRect(240,0,120,500);
-  // Finish Line
-  x.fillStyle="#fff"; x.fillRect(120,20,120,20);
-  x.fillStyle="#000";
-  for(let i=0;i<6;i++){ x.fillRect(120+i*20,20,10,10); x.fillRect(130+i*20,30,10,10); }
-  x.fillStyle="#000"; x.font="bold 16px sans-serif"; x.fillText("FINISH",150,15);
-  // Car
-  x.fillStyle="red"; x.fillRect(carX,carY,40,60);
-  x.fillStyle="#333"; x.fillRect(carX-5,carY+5,10,15); x.fillRect(carX+35,carY+5,10,15);
-  x.fillRect(carX-5,carY+40,10,15); x.fillRect(carX+35,carY+40,10,15);
-  x.fillStyle="white"; x.font="bold 18px sans-serif"; x.fillText("1",carX+15,carY+35);
+document.getElementById('startBtn').onclick=()=>{document.getElementById('startScreen').style.display='none'; playing=true; spawnEnemies(); loop();};
+let joy=document.getElementById('joy'), knob=document.getElementById('knob'), joyActive=false;
+joy.addEventListener('touchstart',e=>{joyActive=true});
+joy.addEventListener('touchmove',e=>{let t=e.touches[0]; let r=joy.getBoundingClientRect(); let x=t.clientX-(r.left+55), y=t.clientY-(r.top+55); let d=Math.sqrt(x*x+y*y); if(d>40){x=x/d*40; y=y/d*40;} knob.style.left=(32+x)+'px'; knob.style.top=(32+y)+'px'; dx=x/40; dy=y/40;});
+joy.addEventListener('touchend',()=>{dx=0;dy=0; knob.style.left='32px'; knob.style.top='32px';});
+document.getElementById('fireBtn').addEventListener('touchstart',e=>{e.preventDefault(); shoot();});
+document.getElementById('fireBtn').addEventListener('click',shoot);
+function shoot(){
+  if(!playing) return;
+  let b=document.createElement('div'); b.className='bullet'; let bx=px+15, by=py+15; b.style.left=bx+'px'; b.style.top=by+'px'; game.appendChild(b);
+  let dirX=0, dirY=-1; let nearest=null, nd=9999; enemies.forEach(en=>{let d=Math.hypot(en.x-px,en.y-py); if(d<nd){nd=d; nearest=en;}});
+  if(nearest){let d=Math.hypot(nearest.x-px,nearest.y-py); dirX=(nearest.x-px)/d; dirY=(nearest.y-py)/d;}
+  bullets.push({el:b,x:bx,y:by,vx:dirX*8,vy:dirY*8});
+  let a=new Audio('https://www.soundjay.com/mechanical/sounds/gun-gunshot-01.mp3'); a.play().catch(()=>{});
 }
-
-function move(d){
-  if(osc) osc.frequency.value=120+Math.random()*80;
-  if(d=='up') carY-=20;
-  if(d=='left') carX-=20;
-  if(d=='right') carX+=20;
-  if(carY<=40){
-    document.getElementById("msg").innerText="جیت گئے! 🎉 Level 1 Complete!";
-    if(osc) osc.frequency.value=300;
-  }
-  draw();
+function loop(){
+  if(!playing) return;
+  px=Math.max(0,Math.min(window.innerWidth-40, px+dx*5)); py=Math.max(50,Math.min(window.innerHeight-150, py+dy*5));
+  player.style.left=px+'px'; player.style.top=py+'px';
+  bullets.forEach((b,i)=>{
+    b.x+=b.vx; b.y+=b.vy; b.el.style.left=b.x+'px'; b.el.style.top=b.y+'px';
+    enemies.forEach((en,ei)=>{
+      if(Math.hypot(en.x-b.x,en.y-b.y)<25){en.hp--; b.el.remove(); bullets.splice(i,1); if(en.hp<=0){en.el.remove(); enemies.splice(ei,1); kills++; document.getElementById('kills').textContent=kills; document.getElementById('left').textContent=enemies.length; if(enemies.length===0){document.getElementById('winScreen').style.display='flex'; playing=false;}}}
+    });
+    if(b.x<0||b.x>window.innerWidth||b.y<0||b.y>window.innerHeight){b.el.remove(); bullets.splice(i,1);}
+  });
+  enemies.forEach(en=>{
+    let d=Math.hypot(px-en.x,py-en.y); if(d>0){en.x+=(px-en.x)/d*en.speed; en.y+=(py-en.y)/d*en.speed;}
+    en.el.style.left=en.x+'px'; en.el.style.top=en.y+'px';
+    if(d<30){health-=0.5; document.getElementById('healthFill').style.width=health+'%'; if(health<=0){alert('Tu Haar Gaya! Dobara Koshish Kar'); location.reload();}}
+  });
+  requestAnimationFrame(loop);
 }
-draw();
 </script>
 </body>
 </html>
