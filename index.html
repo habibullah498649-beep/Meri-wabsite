@@ -1,6 +1,50 @@
-<h1 style="text-align:center">میری گیم</h1>
-<p style="text-align:center">بٹن دبا تے سکور بنا!</p>
-<h2 style="text-align:center" id="s">سکور: 0</h2>
-<div style="text-align:center">
-<button onclick="s.innerText='سکور: '+(+s.innerText.split(':')[1]+1)" style="font-size:30px;padding:20px">دباؤ 🎮</button>
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Game</title>
+<style>
+body{margin:0;background:#222;color:white;text-align:center;font-family:sans-serif;overflow:hidden}
+#road{width:300px;height:500px;background:#333;margin:10px auto;position:relative;overflow:hidden;border-left:5px solid white;border-right:5px solid white}
+#mycar{width:50px;height:80px;background:red;position:absolute;bottom:20px;left:125px;border-radius:10px;font-size:35px;line-height:80px}
+.enemy{width:50px;height:80px;background:yellow;position:absolute;top:-100px;border-radius:10px;font-size:35px;line-height:80px;color:black}
+button{padding:15px 30px;font-size:20px;margin:5px;border-radius:10px;border:none;background:green;color:white}
+#score{font-size:22px}
+</style>
+</head>
+<body>
+<h2>🚗 کار والی گیم</h2>
+<div id="score">سکور: 0 | لیول: 1</div>
+<div id="road">
+<div id="mycar">🚗</div>
 </div>
+<button onclick="move(-1)">◀ کھبے</button>
+<button onclick="move(1)">سجے ▶</button>
+<br><button onclick="location.reload()" style="background:orange">دوبارہ کھیڈو</button>
+<script>
+let x=125,score=0,speed=3,level=1;
+let road=document.getElementById('road');
+let mycar=document.getElementById('mycar');
+function move(d){x+=d*30;if(x<0)x=0;if(x>250)x=250;mycar.style.left=x+'px';}
+function makeEnemy(){
+let e=document.createElement('div');
+e.className='enemy';e.innerHTML='🚙';
+e.style.left=Math.floor(Math.random()*5)*55+'px';
+e.style.top='-100px';
+road.appendChild(e);
+let y=-100;
+let t=setInterval(()=>{
+y+=speed;e.style.top=y+'px';
+if(y>500){clearInterval(t);e.remove();score+=10;
+if(score%100==0){level++;speed++;}
+document.getElementById('score').innerText='سکور: '+score+' | لیول: '+level;}
+let mx=x,my=400;
+if(y+80>my && y<my+80 && Math.abs(parseInt(e.style.left)-mx)<45){
+alert('گیم ختم! تیرا سکور: '+score);clearInterval(t);location.reload();}
+},20);
+}
+setInterval(makeEnemy,1200);
+</script>
+</body>
+</html>
